@@ -48,7 +48,7 @@ class F
      * @param string $in
      * @return bool
      */
-    public static function exists(string $file, string $in = null): bool
+    public static function exists(string $file, ?string $in = null): bool
     {
         try {
             static::realpath($file, $in);
@@ -66,15 +66,15 @@ class F
      * @param string $extension Set an optional extension to overwrite the current one
      * @return string
      */
-    public static function extension(string $file = null, string $extension = null): string
+    public static function extension(?string $file = null, ?string $extension = null): string
     {
         // overwrite the current extension
         if ($extension !== null) {
-            return static::name($file) . '.' . $extension;
+            return static::name($file ?? '') . '.' . $extension;
         }
 
         // return the current extension
-        return Str::lower(pathinfo($file, PATHINFO_EXTENSION));
+        return Str::lower(pathinfo($file ?? '', PATHINFO_EXTENSION));
     }
 
 
@@ -133,7 +133,7 @@ class F
      * @param string $in
      * @return string|null
      */
-    public static function realpath(string $file, string $in = null)
+    public static function realpath(string $file, ?string $in = null)
     {
         $realpath = realpath($file);
 

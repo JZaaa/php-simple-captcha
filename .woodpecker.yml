@@ -14,7 +14,6 @@ pipeline:
       - curl -sSL https://raw.githubusercontent.com/composer/getcomposer.org/master/web/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
       # Install dependencies
-      - apt install --yes ocrad tesseract-ocr
       - composer install
 
       # Run PHPUnit tests
@@ -28,3 +27,7 @@ matrix:
     - 7.4  # EOL 2021-11-28, SS 2022-11-28
     - 8.0  # EOL 2020-11-26, SS 2023-10-26
     - 8.1  # EOL 2023-11-25, SS 2024-11-25
+    - 8.2
+    - 8.3
+    - 8.4
+    - 8.5

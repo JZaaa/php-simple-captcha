@@ -1,5 +1,4 @@
 # php-simple-captcha
-[![Build](https://ci.codeberg.org/api/badges/S1SYPHOS/php-simple-captcha/status.svg)](https://codeberg.org/S1SYPHOS/php-simple-captcha/issues)
 
 ![Example captcha images](examples.png)
 
@@ -11,7 +10,7 @@
 It's available for [Composer](https://getcomposer.org):
 
 ```text
-composer require s1syphos/php-simple-captcha
+composer require jzaaa/php-simple-captcha
 ```
 
 
@@ -122,11 +121,6 @@ Builds random phrase (of given length using given charset)
 ### `build(int $width = 150, int $height = 40): self`
 
 Builds captcha image
-
-
-### `buildAgainstOCR(int $width = 150, int $height = 40): self`
-
-Builds captcha image until it is (supposedly) unreadable by OCR software
 
 
 ### `save(string $filename, int $quality = 90): void`
@@ -260,7 +254,8 @@ cd demo
 # Launch server
 php -S localhost:3000
 
-# All examples are now available in your browser, eg 'http://localhost:3000/ocr.php'
+# All examples are now available in your browser, eg 'http://localhost:3000/demo.php'
+# Clear, fixed-background captcha demo: 'http://localhost:3000/clear.php'
 ```
 
 

@@ -10,10 +10,6 @@ use SimpleCaptcha\Helpers\Dir;
 use SimpleCaptcha\Helpers\Str;
 use SimpleCaptcha\Helpers\Mime;
 
-use \thiagoalessio\TesseractOCR\TesseractOCR;
-
-use GdImage;
-use resource;
 use Exception;
 
 
@@ -31,9 +27,9 @@ class Builder extends BuilderAbstract
     /**
      * Captcha image
      *
-     * As of PHP 8.0, this is `GdImage` instead of `resource`
+     * As of PHP 8.0, GD functions return an object instead of a resource.
      *
-     * @var resource|GdImage
+     * @var resource|object
      */
     public $image;
     
@@ -495,7 +491,7 @@ class Builder extends BuilderAbstract
     /**
      * Makes image background transparent
      *
-     * @param resource|GdImage $image
+     * @param resource|object $image
      * @return void
      */
     private function addTransparency($image): void
@@ -700,227 +696,10 @@ class Builder extends BuilderAbstract
 
 
     /**
-     * Creates image file suitable for use with OCR software
-     *
-     * See https://priteshgupta.com/2011/09/advanced-image-functions-using-php
-     * See https://github.com/raoulduke/phpocrad
-     *
-     * @param string $output Output file
-     * @param int $amount
-     * @param int $threshold
-     * @return void
-     */
-    private function img2ocr(string $output, int $amount = 80, int $threshold = 3): void
-    {
-        $image = $this->image;
-
-        $canvas = imagecreatetruecolor($this->width, $this->height);
-        $blurred = imagecreatetruecolor($this->width, $this->height);
-
-        # Apply gaussian blur matrix
-        $matrix = [
-            [1, 2, 1],
-            [2, 4, 2],
-            [1, 2, 1],
-        ];
-
-        imagecopy($blurred, $image, 0, 0, 0, 0, $this->width, $this->height);
-        imageconvolution($blurred, $matrix, 16, 0);
-
-        if ($threshold > 0) {
-            # Calculate the difference between the blurred pixels and the original
-            # and set the pixels
-            for ($x = 0; $x < $this->width - 1; $x++) {  # each row
-                for ($y = 0; $y < $this->height; $y++) { # each pixel
-                    $rgbOrig = imagecolorat($image, $x, $y);
-
-                    $rOrig = (($rgbOrig >> 16) & 0xFF);
-                    $gOrig = (($rgbOrig >> 8) & 0xFF);
-                    $bOrig = ($rgbOrig & 0xFF);
-
-                    $rgbBlur = imagecolorat($blurred, $x, $y);
-
-                    $rBlur = (($rgbBlur >> 16) & 0xFF);
-                    $gBlur = (($rgbBlur >> 8) & 0xFF);
-                    $bBlur = ($rgbBlur & 0xFF);
-
-                    # When the masked pixels differ less from the original
-                    # than the threshold specifies, they are set to their original value.
-                    $rNew = (abs($rOrig - $rBlur) >= $threshold)
-                        ? max(0, min(255, ($amount * ($rOrig - $rBlur)) + $rOrig))
-                        : $rOrig;
-                    $gNew = (abs($gOrig - $gBlur) >= $threshold)
-                        ? max(0, min(255, ($amount * ($gOrig - $gBlur)) + $gOrig))
-                        : $gOrig;
-                    $bNew = (abs($bOrig - $bBlur) >= $threshold)
-                        ? max(0, min(255, ($amount * ($bOrig - $bBlur)) + $bOrig))
-                        : $bOrig;
-
-                    if (($rOrig != $rNew) || ($gOrig != $gNew) || ($bOrig != $bNew)) {
-                        $pixCol = ImageColorAllocate($image, $rNew, $gNew, $bNew);
-                        imagesetpixel($image, $x, $y, $pixCol);
-                    }
-                }
-            }
-        } else {
-            for ($x = 0; $x < $this->width; $x++) { # each row
-                for ($y = 0; $y < $this->height; $y++) { # each pixel
-                    $rgbOrig = imagecolorat($image, $x, $y);
-
-                    $rOrig = (($rgbOrig >> 16) & 0xFF);
-                    $gOrig = (($rgbOrig >> 8) & 0xFF);
-                    $bOrig = ($rgbOrig & 0xFF);
-
-                    $rgbBlur = imagecolorat($blurred, $x, $y);
-
-                    $rBlur = (($rgbBlur >> 16) & 0xFF);
-                    $gBlur = (($rgbBlur >> 8) & 0xFF);
-                    $bBlur = ($rgbBlur & 0xFF);
-
-                    $rNew = ($amount * ($rOrig - $rBlur)) + $rOrig;
-                    if ($rNew > 255) {
-                        $rNew = 255;
-                    } elseif ($rNew < 0) {
-                        $rNew = 0;
-                    }
-                    $gNew = ($amount * ($gOrig - $gBlur)) + $gOrig;
-                    if ($gNew > 255) {
-                        $gNew = 255;
-                    } elseif ($gNew < 0) {
-                        $gNew = 0;
-                    }
-                    $bNew = ($amount * ($bOrig - $bBlur)) + $bOrig;
-                    if ($bNew > 255) {
-                        $bNew = 255;
-                    } elseif ($bNew < 0) {
-                        $bNew = 0;
-                    }
-                    $rgbNew = ($rNew << 16) + ($gNew << 8) + $bNew;
-
-                    imagesetpixel($image, $x, $y, $rgbNew);
-                }
-            }
-        }
-
-        # Remove temporary image data
-        imagedestroy($canvas);
-        imagedestroy($blurred);
-
-        # Create PGM file (grayscale)
-        $pgm = 'P5 ' . $this->width . ' ' . $this->height . ' 255' . "\n";
-
-        for ($y = 0; $y < $this->height; $y++) {
-            for ($x = 0; $x < $this->width; $x++) {
-                # Compose color
-                $colors = imagecolorsforindex($image, imagecolorat($image, $x, $y));
-
-                # Extract its RGB values & make them gray-ish
-                $red = $this->round(0.3 * $colors['red']);
-                $green = $this->round(0.59 * $colors['green']);
-                $blue = $this->round(0.11 * $colors['blue']);
-
-                # Create single-byte string from them
-                $pgm .= chr($red + $green + $blue);
-            }
-        }
-
-        F::write($output, $pgm);
-    }
-
-
-    /**
-     * Checks whether captcha image may be solved through OCR
-     *
-     * @param string $tmpDir Directory
-     * @return bool
-     * @throws \Exception
-     */
-    public function isOCRReadable(string $tmpDir = '.tmp'): bool
-    {
-        $commands = [
-            'ocrad' => 'ocrad --scale=2 --charset=ascii %s',
-            'tesseract' => 'tesseract %s stdout -l eng --dpi 2200',
-        ];
-
-        $modes = [];
-
-        foreach (array_keys($commands) as $mode) {
-            if (empty(exec('command -v ' . $mode))) {
-                continue;
-            }
-
-            $modes[] = $mode;
-        }
-
-        if (empty($modes)) {
-            throw new Exception('OCR detection requires either "ocrad" or "tesseract-ocr" to be installed.');
-        }
-
-        # Create temporary directory (if necessary)
-        Dir::make($tmpDir);
-
-        # Join filepath & generate unique filename
-        $pgmFile = sprintf('%s/%s.pgm', $tmpDir, uniqid('captcha'));
-
-        # Create captcha image & convert to grayscale
-        $this->img2ocr($pgmFile);
-
-        # Create data array for possible matches
-        $outputs = [];
-
-        # Iterate over available modes ..
-        foreach ($modes as $mode) {
-            # .. using (suggested) external library (if available), otherwise ..
-            if ($mode == 'tesseract' && class_exists(TesseractOCR::class)) {
-                # Execute  `tesseract-ocr-for-php` & store its output
-                $tesseract = new TesseractOCR($pgmFile);
-                $outputs[] = $tesseract->allowlist(range(0, 9), range('a', 'z'), range('A', 'Z'))->dpi(2200)->run();
-            }
-
-            # .. falling back to shell commands
-            else {
-                # Execute OCR library from CLI
-                $outputs[] = shell_exec(sprintf($commands[$mode], $pgmFile));
-            }
-        }
-
-        # Delete temporary files & directory
-        Dir::remove($tmpDir);
-
-        # Iterate over possible matches
-        foreach (array_filter($outputs) as $output) {
-            # .. clean & validate them
-            if ($this->compare(preg_replace('/[^a-z0-9]/i', '', $output))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Builds captcha image until it is (supposedly) unreadable by OCR software
-     *
-     * @param int $width Captcha image width
-     * @param int $height Captcha image height
-     * @return self
-     */
-    public function buildAgainstOCR(int $width = 150, int $height = 40): self
-    {
-        do {
-            $this->build($width, $height);
-        } while ($this->isOCRReadable());
-
-        return $this;
-    }
-
-
-    /**
      * Creates GD image object from file
      *
      * @param string $image
-     * @return resource|GdImage
+     * @return resource|object
      * @throws \Exception
      */
     protected function img2gd(string $file)
@@ -1069,7 +848,6 @@ class Builder extends BuilderAbstract
      */
     private function random_float($min, $max): float
     {
-        # See https://www.php.net/manual/en/function.mt-rand.php#75793
-        return ($min + lcg_value() * (abs($max - $min)));
+        return $min + (mt_rand() / mt_getrandmax()) * abs($max - $min);
     }
 }

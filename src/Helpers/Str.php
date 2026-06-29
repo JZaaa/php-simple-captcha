@@ -24,7 +24,7 @@ class Str
      * @param bool $caseInsensitive
      * @return bool
      */
-    public static function contains(string $string = null, string $needle, bool $caseInsensitive = false): bool
+    public static function contains(?string $string, string $needle, bool $caseInsensitive = false): bool
     {
         if ($needle === '') {
             return true;
@@ -41,7 +41,7 @@ class Str
      * @param string $string
      * @return int
      */
-    public static function length(string $string = null): int
+    public static function length(?string $string = null): int
     {
         return mb_strlen($string ?? '', 'UTF-8');
     }
@@ -53,7 +53,7 @@ class Str
      * @param string $string
      * @return string
      */
-    public static function lower(string $string = null): string
+    public static function lower(?string $string = null): string
     {
         return mb_strtolower($string ?? '', 'UTF-8');
     }
@@ -81,14 +81,14 @@ class Str
      * @param bool $caseInsensitive
      * @return int|bool
      */
-    public static function position(string $string = null, string $needle, bool $caseInsensitive = false)
+    public static function position(?string $string, string $needle, bool $caseInsensitive = false)
     {
         if ($caseInsensitive === true) {
             $string = static::lower($string);
             $needle = static::lower($needle);
         }
 
-        return mb_strpos($string, $needle, 0, 'UTF-8');
+        return mb_strpos($string ?? '', $needle, 0, 'UTF-8');
     }
 
 
@@ -113,7 +113,7 @@ class Str
      * @param bool $caseInsensitive
      * @return bool
      */
-    public static function startsWith(string $string = null, string $needle, bool $caseInsensitive = false): bool
+    public static function startsWith(?string $string, string $needle, bool $caseInsensitive = false): bool
     {
         if ($needle === '') {
             return true;
@@ -131,7 +131,7 @@ class Str
      * @param int $length
      * @return string
      */
-    public static function substr(string $string = null, int $start = 0, int $length = null): string
+    public static function substr(?string $string = null, int $start = 0, ?int $length = null): string
     {
         return mb_substr($string ?? '', $start, $length, 'UTF-8');
     }

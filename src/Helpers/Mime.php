@@ -171,7 +171,7 @@ class Mime
      * @param string $extension
      * @return string|false
      */
-    public static function type(string $file, string $extension = null)
+    public static function type(string $file, ?string $extension = null)
     {
         // use the standard finfo extension
         $mime = static::fromFileInfo($file);

@@ -53,7 +53,7 @@ class Dir
      * @param bool $absolute
      * @return array
      */
-    public static function files(string $dir, array $ignore = null, bool $absolute = false): array
+    public static function files(string $dir, ?array $ignore = null, bool $absolute = false): array
     {
         $result = array_values(array_filter(static::read($dir, $ignore, true), 'is_file'));
 
@@ -112,7 +112,7 @@ class Dir
      * @param bool $absolute If true, the full path for each item will be returned
      * @return array An array of filenames
      */
-    public static function read(string $dir, array $ignore = null, bool $absolute = false): array
+    public static function read(string $dir, ?array $ignore = null, bool $absolute = false): array
     {
         if (is_dir($dir) === false) {
             return [];

@@ -181,32 +181,6 @@ class BuilderTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function testBuildAgainstOCR(): void
-    {
-        try {
-            # Assert result
-            $this->assertInstanceOf('SimpleCaptcha\Builder', Builder::create()->buildAgainstOCR());
-        } catch (Exception $e) {
-            if ($e->getMessage() == 'OCR detection requires either "ocrad" or "tesseract-ocr" to be installed.') {
-                $this->markTestIncomplete('No OCR software installed, skipping ..');
-            }
-        }
-    }
-
-
-    public function testIsOCRReadable(): void
-    {
-        try {
-            # Assert result
-            $this->assertIsBool(self::$builder->isOCRReadable());
-        } catch (Exception $e) {
-            if ($e->getMessage() == 'OCR detection requires either "ocrad" or "tesseract-ocr" to be installed.') {
-                $this->markTestIncomplete('No OCR software installed, skipping ..');
-            }
-        }
-    }
-
-
     /**
      * Setup ('testSave')
      *
